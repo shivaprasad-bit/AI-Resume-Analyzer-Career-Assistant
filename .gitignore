@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+
+uploads/
+users.db
+
+venv/
+.venv/
+
+tempCodeRunnerFile.py
+
+.vscode/
