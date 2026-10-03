@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Something went wrong | CareerAI{% endblock %}
+
+{% block content %}
+<section class="error-layout">
+    <div class="error-panel">
+        <p class="eyebrow">500 error</p>
+        <h1>We could not complete that request.</h1>
+        <p>Please return to the dashboard and try again. Your saved resume history is not changed by this message.</p>
+        {% if session.get('user') %}
+        <a class="btn btn-primary" href="{{ url_for('home') }}">Return to dashboard</a>
+        {% else %}
+        <a class="btn btn-primary" href="{{ url_for('login') }}">Return to sign in</a>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

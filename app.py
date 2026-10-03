@@ -1,9 +1,9 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, flash, render_template, request, redirect, session, url_for
 from datetime import datetime
 import os
 
 from analyzer import extract_text, detect_skills
-from ats import calculate_ats
+from ats import calculate_ats, get_ats_breakdown
 from career import recommend_career
 from skill_gap import find_missing_skills
 from recommendations import generate_recommendations
@@ -42,11 +42,40 @@ def home():
         return redirect("/login")
 
     latest_resume = get_latest_resume(session["user_id"])
+    resume_history = get_resume_history(session["user_id"])
+
+    latest_score = None
+    best_ats_score = None
+    score_change = None
+    recommended_next_steps = []
+
+    if latest_resume:
+        latest_score = latest_resume["ats_score"]
+        best_ats_score = max(
+            resume["ats_score"]
+            for resume in resume_history
+            if resume["ats_score"] is not None
+        )
+
+        if len(resume_history) > 1:
+            previous_score = resume_history[1]["ats_score"]
+            if previous_score is not None:
+                score_change = latest_score - previous_score
+
+        # History stores scores, not skill gaps, so only use score-based advice here.
+        recommended_next_steps = generate_recommendations(latest_score, [])
 
     return render_template(
         "index.html",
         username=session["user"],
-        latest_resume=latest_resume
+        latest_resume=latest_resume,
+        resume_count=len(resume_history),
+        recent_resumes=resume_history[:5],
+        progress_resumes=list(reversed(resume_history[:6])),
+        latest_score=latest_score,
+        best_ats_score=best_ats_score,
+        score_change=score_change,
+        recommended_next_steps=recommended_next_steps
     )
 
 
@@ -70,9 +99,11 @@ def register():
         )
 
         if success:
-            return redirect("/login")
+            flash("Your CareerAI account is ready. Please sign in.", "success")
+            return redirect(url_for("login"))
 
-        return "Email already exists."
+        flash("An account with that email already exists.", "error")
+        return redirect(url_for("register"))
 
     return render_template("register.html")
 
@@ -97,9 +128,11 @@ def login():
             session["email"] = user["email"]
             session["user_id"] = user["id"]
 
-            return redirect("/")
+            flash("Welcome back, " + user["fullname"] + ".", "success")
+            return redirect(url_for("home"))
 
-        return "Invalid Email or Password"
+        flash("Invalid email or password.", "error")
+        return redirect(url_for("login"))
 
     return render_template("login.html")
 
@@ -125,12 +158,14 @@ def upload_resume():
         return redirect("/login")
 
     if "resume" not in request.files:
-        return "No file selected."
+        flash("Choose a resume before starting the analysis.", "error")
+        return redirect(url_for("home") + "#analyze-resume")
 
     file = request.files["resume"]
 
     if file.filename == "":
-        return "Please choose a PDF file."
+        flash("Choose a PDF resume before starting the analysis.", "error")
+        return redirect(url_for("home") + "#analyze-resume")
 
     # ----------------------------------------
     # Create User Folder
@@ -170,6 +205,10 @@ def upload_resume():
         skills,
         resume_text
     )
+    ats_breakdown = get_ats_breakdown(
+        skills,
+        resume_text
+    )
 
     career = recommend_career(skills)
 
@@ -203,10 +242,12 @@ def upload_resume():
         "result.html",
         filename=filename,
         score=ats_score,
+        ats_breakdown=ats_breakdown,
         skills=skills,
         career=career,
         missing_skills=missing_skills,
-        recommendations=recommendations
+        recommendations=recommendations,
+        analyzed_at=datetime.now()
     )
 
 
@@ -224,9 +265,18 @@ def history():
         session["user_id"]
     )
 
+    latest_score = resumes[0]["ats_score"] if resumes else None
+    best_ats_score = max(
+        (resume["ats_score"] for resume in resumes if resume["ats_score"] is not None),
+        default=None
+    )
+
     return render_template(
         "history.html",
-        resumes=resumes
+        resumes=resumes,
+        resume_count=len(resumes),
+        latest_score=latest_score,
+        best_ats_score=best_ats_score
     )
 
 

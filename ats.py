@@ -2,21 +2,11 @@
 # ATS Score Calculator
 # ----------------------------------------
 
-def calculate_ats(skills, resume_text):
 
-    score = 0
+def get_ats_breakdown(skills, resume_text):
+    """Return the existing ATS criteria as display-ready score categories."""
 
     resume_text = resume_text.lower()
-
-    # ====================================
-    # 1. Technical Skills (40 Marks)
-    # ====================================
-
-    score += min(len(skills) * 5, 40)
-
-    # ====================================
-    # 2. Projects (15 Marks)
-    # ====================================
 
     project_keywords = [
         "project",
@@ -26,14 +16,6 @@ def calculate_ats(skills, resume_text):
         "created",
         "implemented"
     ]
-
-    if any(word in resume_text for word in project_keywords):
-        score += 15
-
-    # ====================================
-    # 3. Education (10 Marks)
-    # ====================================
-
     education_keywords = [
         "b.tech",
         "bachelor",
@@ -41,55 +23,66 @@ def calculate_ats(skills, resume_text):
         "college",
         "university"
     ]
-
-    if any(word in resume_text for word in education_keywords):
-        score += 10
-
-    # ====================================
-    # 4. Certifications (10 Marks)
-    # ====================================
-
     certification_keywords = [
         "certificate",
         "certification",
         "certified"
     ]
-
-    if any(word in resume_text for word in certification_keywords):
-        score += 10
-
-    # ====================================
-    # 5. GitHub (10 Marks)
-    # ====================================
-
-    if "github.com" in resume_text:
-        score += 10
-
-    # ====================================
-    # 6. LinkedIn (10 Marks)
-    # ====================================
-
-    if "linkedin.com" in resume_text:
-        score += 10
-
-    # ====================================
-    # 7. Email (3 Marks)
-    # ====================================
-
-    if "@" in resume_text:
-        score += 3
-
-    # ====================================
-    # 8. Phone Number (2 Marks)
-    # ====================================
-
     digits = "".join(ch for ch in resume_text if ch.isdigit())
 
-    if len(digits) >= 10:
-        score += 2
+    breakdown = [
+        {
+            "label": "Technical skills",
+            "score": min(len(skills) * 5, 40),
+            "maximum": 40
+        },
+        {
+            "label": "Projects",
+            "score": 15 if any(word in resume_text for word in project_keywords) else 0,
+            "maximum": 15
+        },
+        {
+            "label": "Education",
+            "score": 10 if any(word in resume_text for word in education_keywords) else 0,
+            "maximum": 10
+        },
+        {
+            "label": "Certifications",
+            "score": 10 if any(word in resume_text for word in certification_keywords) else 0,
+            "maximum": 10
+        },
+        {
+            "label": "GitHub profile",
+            "score": 10 if "github.com" in resume_text else 0,
+            "maximum": 10
+        },
+        {
+            "label": "LinkedIn profile",
+            "score": 10 if "linkedin.com" in resume_text else 0,
+            "maximum": 10
+        },
+        {
+            "label": "Email address",
+            "score": 3 if "@" in resume_text else 0,
+            "maximum": 3
+        },
+        {
+            "label": "Phone number",
+            "score": 2 if len(digits) >= 10 else 0,
+            "maximum": 2
+        }
+    ]
 
-    # ====================================
-    # Final Score
-    # ====================================
+    for category in breakdown:
+        category["percentage"] = int(
+            (category["score"] / category["maximum"]) * 100
+        )
+
+    return breakdown
+
+
+def calculate_ats(skills, resume_text):
+    breakdown = get_ats_breakdown(skills, resume_text)
+    score = sum(category["score"] for category in breakdown)
 
     return min(score, 100)
