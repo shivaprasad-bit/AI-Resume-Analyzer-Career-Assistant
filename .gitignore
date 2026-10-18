@@ -10,3 +10,12 @@ venv/
 tempCodeRunnerFile.py
 
 .vscode/
+.env
+.env.*
+!.env.example
+
+*.db
+instance/
+.pytest_cache/
+.coverage
+htmlcov/

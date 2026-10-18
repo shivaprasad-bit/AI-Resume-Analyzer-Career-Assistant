@@ -1,60 +1,11 @@
+from career import CAREER_PATHS
+
+
 # ----------------------------------------
 # Required Skills for Each Career
 # ----------------------------------------
 
-REQUIRED_SKILLS = {
-
-    "AI / Machine Learning Engineer": [
-        "python",
-        "machine learning",
-        "deep learning",
-        "tensorflow",
-        "keras",
-        "numpy",
-        "pandas",
-        "sql"
-    ],
-
-    "Data Analyst": [
-        "python",
-        "sql",
-        "excel",
-        "power bi",
-        "tableau",
-        "statistics",
-        "pandas"
-    ],
-
-    "Python Developer": [
-        "python",
-        "flask",
-        "django",
-        "html",
-        "css",
-        "javascript",
-        "mysql"
-    ],
-
-    "Java Developer": [
-        "java",
-        "spring",
-        "mysql",
-        "sql",
-        "html",
-        "css"
-    ],
-
-    "Full Stack Developer": [
-        "html",
-        "css",
-        "javascript",
-        "react",
-        "node.js",
-        "python",
-        "flask",
-        "mysql"
-    ]
-}
+REQUIRED_SKILLS = CAREER_PATHS
 
 
 # ----------------------------------------
@@ -63,13 +14,13 @@ REQUIRED_SKILLS = {
 
 def find_missing_skills(career, user_skills):
 
-    user_skills = [skill.lower() for skill in user_skills]
+    user_skills = set(skill.lower() for skill in user_skills)
 
     required_skills = REQUIRED_SKILLS.get(career, [])
 
     missing = sorted(
         list(
-            set(required_skills) - set(user_skills)
+            set(required_skills) - user_skills
         )
     )
 
@@ -96,7 +47,7 @@ def total_missing_skills(career, user_skills):
 
 def skill_match_percentage(career, user_skills):
 
-    user_skills = [skill.lower() for skill in user_skills]
+    user_skills = set(skill.lower() for skill in user_skills)
 
     required_skills = REQUIRED_SKILLS.get(career, [])
 
@@ -104,7 +55,7 @@ def skill_match_percentage(career, user_skills):
         return 0
 
     matched = len(
-        set(user_skills) &
+        user_skills &
         set(required_skills)
     )
 
@@ -132,7 +83,14 @@ def learning_priority(missing_skills):
         "flask",
         "django",
         "react",
-        "javascript"
+        "javascript",
+        "rest api",
+        "docker",
+        "spring boot",
+        "mongodb",
+        "express.js",
+        "scikit-learn",
+        "nlp"
 
     }
 

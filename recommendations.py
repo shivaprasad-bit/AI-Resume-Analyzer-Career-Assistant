@@ -5,6 +5,7 @@
 def generate_recommendations(score, missing_skills):
 
     recommendations = []
+    score = score or 0
 
     # ====================================
     # ATS Score Recommendations
@@ -94,9 +95,38 @@ def generate_recommendations(score, missing_skills):
 
         "aws": "Learn AWS Cloud fundamentals.",
 
-        "azure": "Learn Microsoft Azure fundamentals."
+        "azure": "Learn Microsoft Azure fundamentals.",
+
+        "artificial intelligence": "Build AI projects that show clear problem-solving and measurable outcomes.",
+
+        "data analysis": "Add data analysis projects with clear insights, charts, and business impact.",
+
+        "data science": "Build data science projects covering cleaning, modeling, evaluation, and storytelling.",
+
+        "opencv": "Create computer vision projects using OpenCV and document the results.",
+
+        "mongodb": "Practice MongoDB schema design, queries, indexes, and CRUD operations.",
+
+        "express.js": "Build Express.js APIs with routing, validation, authentication, and error handling.",
+
+        "tailwind css": "Practice building responsive interfaces with Tailwind CSS utility classes.",
+
+        "rest api": "Build REST APIs with clean endpoints, validation, status codes, and documentation.",
+
+        "nlp": "Build NLP projects such as text classification, summarization, or resume parsing.",
+
+        "scikit-learn": "Practice Scikit-learn workflows for preprocessing, training, evaluation, and tuning.",
+
+        "spring boot": "Build Spring Boot REST APIs with database integration and layered architecture.",
+
+        "postgresql": "Practice PostgreSQL schema design, joins, indexing, and query optimization.",
+
+        "docker": "Containerize your projects with Docker and include setup instructions.",
+
+        "kubernetes": "Learn Kubernetes basics such as pods, deployments, services, and scaling."
 
     }
+    generic_skill_tip = "Add practical proof for {skill}, such as a project, certification, or measurable resume bullet."
 
     # ====================================
     # Skill-Based Recommendations
@@ -104,22 +134,19 @@ def generate_recommendations(score, missing_skills):
 
     for skill in missing_skills:
 
-        tip = skill_tips.get(skill.lower())
+        skill_name = skill.lower()
+        tip = skill_tips.get(skill_name)
 
-        if tip:
+        if not tip:
 
-            recommendations.append(tip)
+            tip = generic_skill_tip.format(skill=skill)
+
+        recommendations.append(tip)
 
     # ====================================
     # Remove Duplicates
     # ====================================
 
     recommendations = list(dict.fromkeys(recommendations))
-
-    # ====================================
-    # Sort Recommendations
-    # ====================================
-
-    recommendations.sort()
 
     return recommendations

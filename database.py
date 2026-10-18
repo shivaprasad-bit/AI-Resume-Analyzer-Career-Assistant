@@ -1,7 +1,18 @@
+
+import json
+import os
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 
-DATABASE = "users.db"
+DATABASE = os.path.abspath(
+    os.environ.get("CAREERAI_DATABASE_PATH", "users.db")
+)
+
+RESUME_ANALYSIS_COLUMNS = {
+    "skills": "TEXT",
+    "missing_skills": "TEXT",
+    "recommendations": "TEXT",
+}
 
 
 # ----------------------------------------
@@ -14,6 +25,50 @@ def get_connection():
     conn.row_factory = sqlite3.Row
 
     return conn
+
+
+def serialize_list(items):
+
+    return json.dumps(items or [])
+
+
+def decode_resume_row(row):
+
+    if row is None:
+
+        return None
+
+    resume = dict(row)
+
+    for field in RESUME_ANALYSIS_COLUMNS:
+
+        try:
+
+            resume[field] = json.loads(resume.get(field) or "[]")
+
+        except json.JSONDecodeError:
+
+            resume[field] = []
+
+    return resume
+
+
+def migrate_resume_history(cursor):
+
+    cursor.execute("PRAGMA table_info(resume_history)")
+
+    existing_columns = {
+        column["name"]
+        for column in cursor.fetchall()
+    }
+
+    for column, column_type in RESUME_ANALYSIS_COLUMNS.items():
+
+        if column not in existing_columns:
+
+            cursor.execute(
+                f"ALTER TABLE resume_history ADD COLUMN {column} {column_type}"
+            )
 
 
 # ----------------------------------------
@@ -56,6 +111,12 @@ def create_database():
 
             career TEXT,
 
+            skills TEXT,
+
+            missing_skills TEXT,
+
+            recommendations TEXT,
+
             upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
             FOREIGN KEY(user_id)
@@ -63,6 +124,8 @@ def create_database():
 
         )
     """)
+
+    migrate_resume_history(cursor)
 
     conn.commit()
     conn.close()
@@ -151,7 +214,10 @@ def save_resume(
     resume_name,
     resume_path,
     ats_score,
-    career
+    career,
+    skills=None,
+    missing_skills=None,
+    recommendations=None
 
 ):
 
@@ -166,11 +232,14 @@ def save_resume(
             resume_name,
             resume_path,
             ats_score,
-            career
+            career,
+            skills,
+            missing_skills,
+            recommendations
 
         )
 
-        VALUES(?,?,?,?,?)
+        VALUES(?,?,?,?,?,?,?,?)
 
     """, (
 
@@ -178,7 +247,10 @@ def save_resume(
         resume_name,
         resume_path,
         ats_score,
-        career
+        career,
+        serialize_list(skills),
+        serialize_list(missing_skills),
+        serialize_list(recommendations)
 
     ))
 
@@ -213,7 +285,7 @@ def get_latest_resume(user_id):
 
     conn.close()
 
-    return resume
+    return decode_resume_row(resume)
 
 
 # ----------------------------------------
@@ -237,7 +309,10 @@ def get_resume_history(user_id):
 
     """, (user_id,))
 
-    history = cursor.fetchall()
+    history = [
+        decode_resume_row(resume)
+        for resume in cursor.fetchall()
+    ]
 
     conn.close()
 
@@ -267,49 +342,50 @@ def get_user_by_id(user_id):
 
 
 # ----------------------------------------
+# Get Resume By ID
+# ----------------------------------------
+
+def get_resume_by_id(resume_id, user_id):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM resume_history
+        WHERE id=? AND user_id=?
+        """,
+        (resume_id, user_id)
+    )
+
+    resume = cursor.fetchone()
+
+    conn.close()
+
+    return decode_resume_row(resume)
+
+
+# ----------------------------------------
 # Delete Resume
 # ----------------------------------------
 
-def delete_resume(resume_id):
+def delete_resume(resume_id, user_id):
 
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute(
-
-        "DELETE FROM resume_history WHERE id=?",
-
-        (resume_id,)
-
+        """
+        DELETE FROM resume_history
+        WHERE id=? AND user_id=?
+        """,
+        (resume_id, user_id)
     )
+
+    deleted = cursor.rowcount > 0
 
     conn.commit()
     conn.close()
 
-
-# ----------------------------------------
-# Delete User
-# ----------------------------------------
-
-def delete_user(user_id):
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute(
-
-        "DELETE FROM users WHERE id=?",
-
-        (user_id,)
-
-    )
-
-    conn.commit()
-    conn.close()
-
-
-# ----------------------------------------
-# Initialize Database
-# ----------------------------------------
-
-create_database()
+    return deleted

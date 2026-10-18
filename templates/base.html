@@ -7,8 +7,23 @@
     <title>{% block title %}CareerAI | AI Career Assistant{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+    (function () {
+        const savedTheme = localStorage.getItem("careerai-theme");
+
+        if (savedTheme) {
+            document.documentElement.setAttribute(
+                "data-theme",
+                savedTheme
+            );
+        }
+    })();
+</script>
 </head>
-<body class="{% block body_class %}{% endblock %}">
+<body
+    class="{% block body_class %}{% endblock %}"
+    data-theme="midnight"
+>
     <div class="site-shell">
         {% if session.get('user') %}
         <header class="topbar">
@@ -32,10 +47,209 @@
                 </nav>
 
                 <div class="account-area">
-                    <span class="user-initial" aria-hidden="true">{{ session.get('user', 'U')[0]|upper }}</span>
-                    <span class="account-name">{{ session.get('user') }}</span>
-                    <a class="nav-logout" href="{{ url_for('logout') }}">Logout</a>
+                    <div class="theme-picker">
+                        <button
+                            class="theme-toggle"
+                            type="button"
+                            data-theme-toggle
+                            aria-expanded="false"
+                            aria-haspopup="true"
+                            title="Change theme"
+                        >
+                            <span class="theme-toggle-icon" aria-hidden="true">🎨</span>
+                            <span class="theme-toggle-label">Theme</span>
+                        </button>
+
+                        <div
+                            class="theme-menu"
+                            data-theme-menu
+                            hidden
+                        >
+
+                            <div class="theme-menu-header">
+                                <strong>Appearance</strong>
+                                <span>Choose your mood</span>
+                            </div>
+
+                            <button
+                                class="theme-option"
+                                type="button"
+                                data-theme-option="midnight"
+                            >
+                <span class="theme-preview theme-preview-midnight"></span>
+
+                <span class="theme-option-info">
+                    <strong>Midnight AI</strong>
+                    <small>Focused & professional</small>
+                </span>
+
+                <span
+                    class="theme-check"
+                    aria-hidden="true"
+                >✓</span>
+            </button>
+
+
+            <button
+                class="theme-option"
+                type="button"
+                data-theme-option="light"
+            >
+                <span class="theme-preview theme-preview-light"></span>
+
+                <span class="theme-option-info">
+                    <strong>Clean Light</strong>
+                    <small>Simple & productive</small>
+                </span>
+
+                <span
+                    class="theme-check"
+                    aria-hidden="true"
+                >✓</span>
+            </button>
+
+
+            <button
+                class="theme-option"
+                type="button"
+                data-theme-option="ocean"
+            >
+                <span class="theme-preview theme-preview-ocean"></span>
+
+                <span class="theme-option-info">
+                    <strong>Ocean</strong>
+                    <small>Calm & fresh</small>
+                </span>
+
+                <span
+                    class="theme-check"
+                    aria-hidden="true"
+                >✓</span>
+            </button>
+
+
+            <button
+                class="theme-option"
+                type="button"
+                data-theme-option="emerald"
+            >
+                <span class="theme-preview theme-preview-emerald"></span>
+
+                <span class="theme-option-info">
+                    <strong>Emerald</strong>
+                    <small>Growth & progress</small>
+                </span>
+
+                <span
+                    class="theme-check"
+                    aria-hidden="true"
+                >✓</span>
+            </button>
+
+
+            <button
+                class="theme-option"
+                type="button"
+                data-theme-option="sunset"
+            >
+                <span class="theme-preview theme-preview-sunset"></span>
+
+                <span class="theme-option-info">
+                    <strong>Sunset</strong>
+                    <small>Creative & energetic</small>
+                </span>
+
+                <span
+                    class="theme-check"
+                    aria-hidden="true"
+                >✓</span>
+            </button>
+
+
+            <button
+                class="theme-option"
+                type="button"
+                data-theme-option="rose"
+            >
+                <span class="theme-preview theme-preview-rose"></span>
+
+                <span class="theme-option-info">
+                    <strong>Rose</strong>
+                    <small>Soft & modern</small>
+                </span>
+
+                <span
+                    class="theme-check"
+                    aria-hidden="true"
+                >✓</span>
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- User Account -->
+
+    <div class="profile-menu" data-profile-menu-root>
+        <button
+            class="profile-menu-toggle"
+            type="button"
+            data-profile-menu-toggle
+            aria-expanded="false"
+            aria-haspopup="true"
+        >
+            <span class="user-initial" aria-hidden="true">
+                {{ session.get('user', 'U')[0]|upper }}
+            </span>
+
+            <span class="account-name">
+                {{ session.get('user') }}
+            </span>
+
+            <span class="profile-menu-caret" aria-hidden="true">
+                ▾
+            </span>
+        </button>
+
+        <div
+            class="profile-dropdown"
+            data-profile-menu
+            hidden
+        >
+            <div class="profile-dropdown-header">
+                <span class="user-initial" aria-hidden="true">
+                    {{ session.get('user', 'U')[0]|upper }}
+                </span>
+
+                <div>
+                    <strong>
+                        {{ session.get('user') }}
+                    </strong>
+
+                    <small>
+                        Signed in
+                    </small>
                 </div>
+            </div>
+
+            <a
+                class="profile-dropdown-link"
+                href="{{ url_for('history') }}"
+            >
+                Resume history
+            </a>
+
+            <a
+                class="profile-dropdown-link profile-dropdown-danger"
+                href="{{ url_for('logout') }}"
+            >
+                Logout
+            </a>
+        </div>
+    </div>
+
+</div>
             </div>
         </header>
         {% else %}
@@ -63,6 +277,82 @@
 
             {% block content %}{% endblock %}
         </main>
+
+        {% if session.get('user') %}
+        <section
+            class="ai-guide"
+            data-ai-guide
+            aria-label="CareerAI guidance assistant"
+        >
+            <button
+                class="ai-guide-toggle"
+                type="button"
+                data-ai-guide-toggle
+                aria-expanded="false"
+            >
+                <span class="ai-guide-toggle-mark" aria-hidden="true">AI</span>
+                <span>Guide</span>
+            </button>
+
+            <div
+                class="ai-guide-panel"
+                data-ai-guide-panel
+                hidden
+            >
+                <div class="ai-guide-header">
+                    <div>
+                        <strong>CareerAI Guide</strong>
+                        <span>Ask for resume guidance</span>
+                    </div>
+
+                    <button
+                        class="ai-guide-close"
+                        type="button"
+                        data-ai-guide-close
+                        aria-label="Close guide"
+                    >
+                        Close
+                    </button>
+                </div>
+
+                <div class="ai-guide-messages" data-ai-guide-messages>
+                    <article class="ai-guide-message ai-guide-message-agent">
+                        Hi {{ session.get('user') }}. I can guide you on ATS score, skills, career path, uploads, and what to improve next.
+                    </article>
+                </div>
+
+                <div class="ai-guide-prompts" aria-label="Suggested questions">
+                    <button type="button" data-ai-guide-prompt="How can I improve my ATS score?">
+                        Improve ATS
+                    </button>
+                    <button type="button" data-ai-guide-prompt="Which skills should I add?">
+                        Skills
+                    </button>
+                    <button type="button" data-ai-guide-prompt="How do I use history?">
+                        History
+                    </button>
+                </div>
+
+                <form class="ai-guide-form" data-ai-guide-form>
+                    <label class="visually-hidden" for="aiGuideInput">
+                        Ask CareerAI Guide
+                    </label>
+
+                    <input
+                        id="aiGuideInput"
+                        type="text"
+                        data-ai-guide-input
+                        placeholder="Ask for guidance..."
+                        autocomplete="off"
+                    >
+
+                    <button type="submit">
+                        Ask
+                    </button>
+                </form>
+            </div>
+        </section>
+        {% endif %}
 
         <footer class="app-footer">
             <span>CareerAI</span>
@@ -177,7 +467,50 @@
                 if (empty) empty.hidden = visibleRows !== 0;
             });
         });
+
+        document.querySelectorAll("[data-profile-menu-root]").forEach(function (root) {
+            var toggle = root.querySelector("[data-profile-menu-toggle]");
+            var menu = root.querySelector("[data-profile-menu]");
+            if (!toggle || !menu) return;
+
+            function openMenu() {
+                menu.hidden = false;
+                toggle.classList.add("is-open");
+                toggle.setAttribute("aria-expanded", "true");
+            }
+
+            function closeMenu() {
+                menu.hidden = true;
+                toggle.classList.remove("is-open");
+                toggle.setAttribute("aria-expanded", "false");
+            }
+
+            toggle.addEventListener("click", function (event) {
+                event.stopPropagation();
+                if (menu.hidden) {
+                    openMenu();
+                } else {
+                    closeMenu();
+                }
+            });
+
+            document.addEventListener("click", function (event) {
+                if (!root.contains(event.target)) {
+                    closeMenu();
+                }
+            });
+
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "Escape") {
+                    closeMenu();
+                }
+            });
+        });
     </script>
+    <script src="{{ url_for('static', filename='theme.js') }}"></script>
+    {% if session.get('user') %}
+    <script src="{{ url_for('static', filename='guide.js') }}"></script>
+    {% endif %}
     {% block scripts %}{% endblock %}
 </body>
 </html>

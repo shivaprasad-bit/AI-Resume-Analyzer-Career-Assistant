@@ -37,11 +37,61 @@ SKILLS = [
     "github",
     "linux",
     "aws",
-    "azure"
+    "azure",
+    "mongodb",
+    "express.js",
+    "tailwind css",
+    "rest api",
+    "nlp",
+    "scikit-learn",
+    "spring boot",
+    "postgresql",
+    "docker",
+    "kubernetes"
 ]
+
+SKILL_ALIASES = {
+    "javascript": ["js"],
+    "node.js": ["nodejs", "node js"],
+    "artificial intelligence": ["ai"],
+    "machine learning": ["ml"],
+    "power bi": ["powerbi"],
+    "opencv": ["open cv"],
+    "mongodb": ["mongo db"],
+    "express.js": ["express", "expressjs", "express js"],
+    "rest api": ["rest apis", "restful api", "restful apis"],
+    "nlp": ["natural language processing"],
+    "scikit-learn": ["sklearn", "scikit learn"],
+    "postgresql": ["postgres"],
+}
 # ----------------------------------------
 # Extract Resume Text
 # ----------------------------------------
+
+def normalize_resume_text(text):
+
+    if not text:
+
+        return ""
+
+    text = text.replace("\u00a0", " ")
+
+    text = re.sub(r"[\u2010-\u2015]", "-", text)
+
+    text = re.sub(r"([a-zA-Z])-\s*\n\s*([a-zA-Z])", r"\1\2", text)
+
+    text = re.sub(r"\s+", " ", text)
+
+    text = re.sub(r"(?<![a-z0-9])c\s*\+\s*\+(?![a-z0-9])", "c++", text, flags=re.IGNORECASE)
+
+    text = re.sub(r"\b(node|express)\s*\.\s*js\b", r"\1.js", text, flags=re.IGNORECASE)
+
+    text = re.sub(r"\b(scikit)\s*-\s*(learn)\b", r"\1-\2", text, flags=re.IGNORECASE)
+
+    text = re.sub(r"\b(github|linkedin)\s*\.\s*com\b", r"\1.com", text, flags=re.IGNORECASE)
+
+    return text.strip().lower()
+
 
 def extract_text(pdf_path):
 
@@ -57,7 +107,7 @@ def extract_text(pdf_path):
 
             text += page_text + "\n"
 
-    return text.lower()
+    return normalize_resume_text(text)
 
 
 # ----------------------------------------
@@ -72,9 +122,17 @@ def detect_skills(text):
 
     for skill in SKILLS:
 
-        if skill.lower() in text:
+        skill_terms = [skill] + SKILL_ALIASES.get(skill, [])
 
-            found_skills.append(skill)
+        for term in skill_terms:
+
+            pattern = r"(?<![a-z0-9+#.])" + re.escape(term.lower()) + r"(?![a-z0-9+#])"
+
+            if re.search(pattern, text):
+
+                found_skills.append(skill)
+
+                break
 
     return sorted(set(found_skills))
 

@@ -1,128 +1,577 @@
 {% extends "base.html" %}
 
 {% block title %}Resume analysis | CareerAI{% endblock %}
-
 {% block content %}
+
+<!-- =========================================================
+     CAREERAI — RESUME ANALYSIS RESULT
+     ========================================================= -->
+
 <section class="page-intro result-intro">
+
     <div>
-        <p class="eyebrow">Resume analyzer</p>
+        <p class="eyebrow">AI resume analyzer</p>
+
         <h1>Resume analysis</h1>
-        <p class="page-subtitle">{{ filename }}</p>
+
+        <p class="page-subtitle result-file-name">
+            {{ filename }}
+        </p>
     </div>
-    <p class="updated-indicator">Analyzed {{ analyzed_at.strftime('%d %b %Y, %I:%M %p') }}</p>
+
+    <div class="result-meta">
+        <span class="result-meta-label">Analyzed</span>
+
+        <strong>
+            {{ analyzed_at.strftime('%d %b %Y, %I:%M %p') }}
+        </strong>
+    </div>
+
 </section>
 
-<section class="analysis-overview">
-    <article class="panel ats-score-panel">
-        <div class="panel-heading">
-            <div>
-                <p class="eyebrow">ATS score</p>
-                <h2>Resume readiness</h2>
-            </div>
-            <span class="status-pill {% if score >= 80 %}status-success{% elif score >= 60 %}status-warning{% else %}status-danger{% endif %}">
-                {% if score >= 80 %}Excellent{% elif score >= 60 %}Good{% else %}Needs improvement{% endif %}
-            </span>
-        </div>
-        <strong class="analysis-score">{{ score }}<span>/100</span></strong>
-        <div class="progress-track score-progress" role="progressbar" aria-label="ATS score" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ score }}">
-            <span class="progress-fill progress-primary" style="width: {{ score }}%"></span>
-        </div>
-        <p class="panel-description">This score reflects the criteria detected in this uploaded resume.</p>
-    </article>
 
-    <article class="panel breakdown-panel">
-        <div class="panel-heading">
-            <div>
-                <p class="eyebrow">Score breakdown</p>
-                <h2>ATS criteria</h2>
-            </div>
-        </div>
-        <div class="breakdown-list">
-            {% for category in ats_breakdown %}
-            <div class="breakdown-row">
-                <div class="breakdown-label">
-                    <span>{{ category.label }}</span>
-                    <strong>{{ category.score }}/{{ category.maximum }}</strong>
+<!-- =========================================================
+     ATS SCORE HERO
+     ========================================================= -->
+
+<section class="result-score-hero">
+
+    <article class="panel result-score-card">
+
+        <div class="result-score-content">
+
+            <!-- Score -->
+
+            <div class="result-score-visual">
+
+                <div
+                    class="result-score-ring"
+                    style="--score: {{ score }}%;"
+                    role="img"
+                    aria-label="ATS score {{ score }} out of 100"
+                >
+
+                    <div class="result-score-ring-inner">
+
+                        <strong>
+                            {{ score }}
+                        </strong>
+
+                        <span>
+                            /100
+                        </span>
+
+                    </div>
+
                 </div>
-                <div class="progress-track compact-progress" role="progressbar" aria-label="{{ category.label }}" aria-valuemin="0" aria-valuemax="{{ category.maximum }}" aria-valuenow="{{ category.score }}">
-                    <span class="progress-fill progress-primary" style="width: {{ category.percentage }}%"></span>
+
+            </div>
+
+
+            <!-- Score Information -->
+
+            <div class="result-score-info">
+
+                <div class="result-section-label">
+                    <span class="result-section-icon">✦</span>
+                    Resume readiness
                 </div>
+
+                <div class="result-score-heading-row">
+
+                    <div>
+
+                        <h2>
+                            Your ATS score
+                        </h2>
+
+                        <p>
+                            How well your resume matches common ATS
+                            screening criteria.
+                        </p>
+
+                    </div>
+
+                    <span
+                        class="status-pill
+                        {% if score >= 80 %}
+                            status-success
+                        {% elif score >= 60 %}
+                            status-warning
+                        {% else %}
+                            status-danger
+                        {% endif %}"
+                    >
+                        {% if score >= 80 %}
+                            Excellent
+                        {% elif score >= 60 %}
+                            Good
+                        {% else %}
+                            Needs improvement
+                        {% endif %}
+                    </span>
+
+                </div>
+
+
+                <!-- Main Score Progress -->
+
+                <div class="result-score-progress">
+
+                    <div class="result-progress-header">
+
+                        <span>
+                            Overall compatibility
+                        </span>
+
+                        <strong>
+                            {{ score }}%
+                        </strong>
+
+                    </div>
+
+                    <div
+                        class="progress-track score-progress"
+                        role="progressbar"
+                        aria-label="Overall ATS compatibility"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        aria-valuenow="{{ score }}"
+                    >
+
+                        <span
+                            class="progress-fill progress-primary"
+                            style="width: {{ score }}%"
+                        ></span>
+
+                    </div>
+
+                </div>
+
+
+                <p class="result-score-description">
+                    Your score is based on the resume criteria detected
+                    by CareerAI, including skills, projects, education,
+                    certifications, professional links, and contact details.
+                </p>
+
             </div>
-            {% endfor %}
+
         </div>
+
     </article>
+
 </section>
 
-<section class="analysis-grid">
-    <article class="panel skills-panel">
-        <div class="panel-heading">
-            <div>
-                <p class="eyebrow">Detected skills</p>
-                <h2>Skills identified</h2>
-            </div>
-            <span class="count-label">{{ skills|length }} found</span>
-        </div>
-        {% if skills %}
-        <div class="chip-list">
-            {% for skill in skills %}
-            <span class="skill-chip">{{ skill }}</span>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="empty-state compact-empty-state">
-            <h3>No listed skills detected</h3>
-            <p>Try including relevant technologies in clear text on your resume.</p>
-        </div>
-        {% endif %}
-    </article>
 
-    <article class="panel career-panel">
-        <p class="eyebrow">Career recommendation</p>
-        <h2>{{ career }}</h2>
-        <p class="panel-description">This recommendation is based on the strongest overlap between detected skills and the current career mappings.</p>
-    </article>
+<!-- =========================================================
+     ATS BREAKDOWN
+     ========================================================= -->
 
-    <article class="panel gap-panel">
-        <div class="panel-heading">
-            <div>
-                <p class="eyebrow">Skill gap</p>
-                <h2>Skills to strengthen</h2>
-            </div>
-            <span class="count-label">{{ missing_skills|length }} missing</span>
-        </div>
-        {% if missing_skills %}
-        <div class="chip-list">
-            {% for skill in missing_skills %}
-            <span class="skill-chip skill-chip-warning">{{ skill }}</span>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="empty-state compact-empty-state">
-            <h3>No mapped skill gaps</h3>
-            <p>Your detected skills cover the current requirements for this recommendation.</p>
-        </div>
-        {% endif %}
-    </article>
-</section>
+<section class="panel result-breakdown-panel">
 
-<section class="panel recommendations-panel">
-    <div class="panel-heading">
+    <div class="panel-heading result-panel-heading">
+
         <div>
-            <p class="eyebrow">Recommendations</p>
-            <h2>Next improvements</h2>
+
+            <p class="eyebrow">
+                ATS evaluation
+            </p>
+
+            <h2>
+                Score breakdown
+            </h2>
+
+            <p class="panel-description">
+                See exactly where your resume is earning points.
+            </p>
+
         </div>
+
+        <span class="result-total-badge">
+            {{ score }}/100
+        </span>
+
     </div>
-    {% if recommendations %}
-    <ol class="recommendation-list">
-        {% for item in recommendations %}
-        <li>{{ item }}</li>
+
+
+    <div class="result-breakdown-grid">
+
+        {% for category in ats_breakdown %}
+
+        <article class="result-breakdown-card">
+
+            <div class="result-breakdown-top">
+
+                <div class="result-breakdown-title">
+
+                    <span class="result-breakdown-number">
+                        {{ loop.index }}
+                    </span>
+
+                    <strong>
+                        {{ category.label }}
+                    </strong>
+
+                </div>
+
+                <strong class="result-breakdown-score">
+                    {{ category.score }}/{{ category.maximum }}
+                </strong>
+
+            </div>
+
+
+            <div
+                class="progress-track compact-progress"
+                role="progressbar"
+                aria-label="{{ category.label }}"
+                aria-valuemin="0"
+                aria-valuemax="{{ category.maximum }}"
+                aria-valuenow="{{ category.score }}"
+            >
+
+                <span
+                    class="progress-fill progress-primary"
+                    style="width: {{ category.percentage }}%"
+                ></span>
+
+            </div>
+
+            <span class="result-breakdown-percent">
+                {{ category.percentage }}%
+            </span>
+
+        </article>
+
         {% endfor %}
-    </ol>
-    {% else %}
-    <div class="empty-state compact-empty-state">
-        <h3>No recommendations available</h3>
-        <p>Upload another resume after making changes to compare your next result.</p>
+
     </div>
-    {% endif %}
+
 </section>
+
+
+<!-- =========================================================
+     SKILLS + CAREER
+     ========================================================= -->
+
+<section class="result-main-grid">
+
+
+    <!-- Detected Skills -->
+
+    <article class="panel result-skills-panel">
+
+        <div class="panel-heading">
+
+            <div>
+
+                <p class="eyebrow">
+                    Resume intelligence
+                </p>
+
+                <h2>
+                    Skills identified
+                </h2>
+
+            </div>
+
+            <span class="count-label">
+                {{ skills|length }} found
+            </span>
+
+        </div>
+
+
+        {% if skills %}
+
+        <div class="chip-list result-chip-list">
+
+            {% for skill in skills %}
+
+            <span class="skill-chip">
+                {{ skill }}
+            </span>
+
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <div class="empty-state compact-empty-state">
+
+            <div class="result-empty-icon">
+                ?
+            </div>
+
+            <h3>
+                No listed skills detected
+            </h3>
+
+            <p>
+                Try including relevant technologies and skills
+                in clear text on your resume.
+            </p>
+
+        </div>
+
+        {% endif %}
+
+    </article>
+
+
+    <!-- Career Recommendation -->
+
+    <article class="panel result-career-panel">
+
+        <div class="result-career-glow"></div>
+
+        <p class="eyebrow">
+            Recommended direction
+        </p>
+
+        <div class="result-career-icon">
+            ✦
+        </div>
+
+        <h2>
+            {{ career }}
+        </h2>
+
+        <p class="panel-description">
+            This recommendation is based on the strongest overlap
+            between your detected skills and CareerAI's current
+            career mappings.
+        </p>
+
+
+        <div class="result-career-footer">
+
+            <span>
+                Career match
+            </span>
+
+            <strong>
+                AI-powered
+            </strong>
+
+        </div>
+
+    </article>
+
+</section>
+
+
+<!-- =========================================================
+     SKILL GAP
+     ========================================================= -->
+
+<section class="panel result-gap-panel">
+
+    <div class="panel-heading">
+
+        <div>
+
+            <p class="eyebrow">
+                Career readiness
+            </p>
+
+            <h2>
+                Skills to strengthen
+            </h2>
+
+            <p class="panel-description">
+                Skills that could improve your alignment with the
+                recommended career direction.
+            </p>
+
+        </div>
+
+        <span class="count-label result-gap-count">
+            {{ missing_skills|length }} missing
+        </span>
+
+    </div>
+
+
+    {% if missing_skills %}
+
+    <div class="result-gap-list">
+
+        {% for skill in missing_skills %}
+
+        <div class="result-gap-item">
+
+            <span class="result-gap-icon">
+                +
+            </span>
+
+            <span>
+                {{ skill }}
+            </span>
+
+            <span class="result-gap-label">
+                Recommended
+            </span>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+    {% else %}
+
+    <div class="empty-state compact-empty-state">
+
+        <div class="result-empty-icon result-empty-success">
+            ✓
+        </div>
+
+        <h3>
+            No mapped skill gaps
+        </h3>
+
+        <p>
+            Your detected skills cover the current requirements
+            for this recommendation.
+        </p>
+
+    </div>
+
+    {% endif %}
+
+</section>
+
+
+<!-- =========================================================
+     RECOMMENDATIONS
+     ========================================================= -->
+
+<section class="panel result-recommendations-panel">
+
+    <div class="panel-heading">
+
+        <div>
+
+            <p class="eyebrow">
+                CareerAI guidance
+            </p>
+
+            <h2>
+                Next improvements
+            </h2>
+
+            <p class="panel-description">
+                Practical changes that can help strengthen your resume.
+            </p>
+
+        </div>
+
+        <span class="result-action-badge">
+            Action plan
+        </span>
+
+    </div>
+
+
+    {% if recommendations %}
+
+    <div class="result-recommendations-list">
+
+        {% for item in recommendations %}
+
+        <article class="result-recommendation-item">
+
+            <span class="result-recommendation-number">
+                {{ loop.index }}
+            </span>
+
+            <div>
+
+                <strong>
+                    Improvement {{ loop.index }}
+                </strong>
+
+                <p>
+                    {{ item }}
+                </p>
+
+            </div>
+
+        </article>
+
+        {% endfor %}
+
+    </div>
+
+    {% else %}
+
+    <div class="empty-state compact-empty-state">
+
+        <div class="result-empty-icon">
+            ✓
+        </div>
+
+        <h3>
+            No recommendations available
+        </h3>
+
+        <p>
+            Upload another resume after making changes to compare
+            your next result.
+        </p>
+
+    </div>
+
+    {% endif %}
+
+</section>
+
+
+<!-- =========================================================
+     RESULT FOOTER ACTIONS
+     ========================================================= -->
+
+<section class="result-actions-panel">
+
+    <div>
+
+        <p class="eyebrow">
+            Ready for the next step?
+        </p>
+
+        <h2>
+            Keep improving your resume.
+        </h2>
+
+        <p>
+            Review your history or analyze an updated version
+            to track your progress.
+        </p>
+
+    </div>
+
+
+    <div class="result-action-buttons">
+
+        <a
+            href="{{ url_for('history') }}"
+            class="btn btn-secondary"
+        >
+            View history
+        </a>
+
+        <a
+            href="{{ url_for('home') }}#analyze-resume"
+            class="btn btn-primary"
+        >
+            Analyze another resume
+        </a>
+
+    </div>
+
+</section>
+
 {% endblock %}

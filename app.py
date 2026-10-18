@@ -1,4 +1,4 @@
-from flask import Flask, flash, render_template, request, redirect, session, url_for
+from flask import Flask, flash, render_template, request, redirect, session, url_for, send_file
 from datetime import datetime
 import os
 
@@ -7,28 +7,47 @@ from ats import calculate_ats, get_ats_breakdown
 from career import recommend_career
 from skill_gap import find_missing_skills
 from recommendations import generate_recommendations
+from history_insights import build_history_progress
+from upload_validation import is_allowed_resume_file
 
 from database import (
+    create_database,
     register_user,
     login_user,
     save_resume,
     get_latest_resume,
-    get_resume_history
+    get_resume_history,
+    get_resume_by_id,
+    delete_resume
 )
 
 # ----------------------------------------
 # Flask App Configuration
 # ----------------------------------------
 
+
 app = Flask(__name__)
 
-app.secret_key = "AI_Career_Assistant_2026"
+# Security configuration
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 
-UPLOAD_FOLDER = "uploads"
+if not app.config["SECRET_KEY"]:
+    if os.environ.get("APP_ENV", "development").lower() == "production":
+        raise RuntimeError("SECRET_KEY must be configured in production.")
+
+    # Local development only
+    app.config["SECRET_KEY"] = "dev-only-change-me"
+
+# Upload configuration
+UPLOAD_FOLDER = os.path.abspath(
+    os.environ.get("UPLOAD_FOLDER", "uploads")
+)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+
+create_database()
 
 
 # ----------------------------------------
@@ -167,6 +186,10 @@ def upload_resume():
         flash("Choose a PDF resume before starting the analysis.", "error")
         return redirect(url_for("home") + "#analyze-resume")
 
+    if not is_allowed_resume_file(file.filename):
+        flash("Only PDF resumes are supported. Please upload a .pdf file.", "error")
+        return redirect(url_for("home") + "#analyze-resume")
+
     # ----------------------------------------
     # Create User Folder
     # ----------------------------------------
@@ -197,7 +220,27 @@ def upload_resume():
     # Resume Analysis
     # ----------------------------------------
 
-    resume_text = extract_text(file_path)
+    try:
+
+        resume_text = extract_text(file_path)
+
+    except Exception:
+
+        if os.path.exists(file_path):
+
+            os.remove(file_path)
+
+        flash("CareerAI could not read that PDF. Please upload a text-based resume PDF.", "error")
+        return redirect(url_for("home") + "#analyze-resume")
+
+    if not resume_text:
+
+        if os.path.exists(file_path):
+
+            os.remove(file_path)
+
+        flash("No readable text was found in that PDF. Please upload a text-based resume PDF.", "error")
+        return redirect(url_for("home") + "#analyze-resume")
 
     skills = detect_skills(resume_text)
 
@@ -231,7 +274,10 @@ def upload_resume():
         filename,
         file_path,
         ats_score,
-        career
+        career,
+        skills,
+        missing_skills,
+        recommendations
     )
 
     # ----------------------------------------
@@ -264,6 +310,7 @@ def history():
     resumes = get_resume_history(
         session["user_id"]
     )
+    resumes = build_history_progress(resumes)
 
     latest_score = resumes[0]["ats_score"] if resumes else None
     best_ats_score = max(
@@ -278,6 +325,70 @@ def history():
         latest_score=latest_score,
         best_ats_score=best_ats_score
     )
+# ----------------------------------------
+# View Resume
+# ----------------------------------------
+
+@app.route("/resume/<int:resume_id>")
+def view_resume(resume_id):
+
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    resume = get_resume_by_id(
+        resume_id,
+        session["user_id"]
+    )
+
+    if resume is None:
+        return "Resume not found.", 404
+
+    if not os.path.exists(resume["resume_path"]):
+        return "Resume file not found.", 404
+
+    return send_file(
+        resume["resume_path"],
+        mimetype="application/pdf",
+        as_attachment=False
+    )
+# ----------------------------------------
+# Delete Resume
+# ----------------------------------------
+
+@app.route("/resume/<int:resume_id>/delete", methods=["POST"])
+def remove_resume(resume_id):
+
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    resume = get_resume_by_id(
+        resume_id,
+        session["user_id"]
+    )
+
+    if resume is None:
+        flash("Resume not found.", "error")
+        return redirect(url_for("history"))
+
+    resume_path = resume["resume_path"]
+
+    deleted = delete_resume(
+        resume_id,
+        session["user_id"]
+    )
+
+    if deleted:
+        if os.path.exists(resume_path):
+            os.remove(resume_path)
+
+        flash(
+            f'"{resume["resume_name"]}" was deleted successfully.',
+            "success"
+        )
+    else:
+        flash("Unable to delete the resume.", "error")
+
+    return redirect(url_for("history"))
 
 
 # ----------------------------------------
@@ -304,8 +415,8 @@ def internal_server_error(error):
 # Run Application
 # ----------------------------------------
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     app.run(
-        debug=True
+        debug=os.environ.get("FLASK_DEBUG", "0") == "1"
     )
